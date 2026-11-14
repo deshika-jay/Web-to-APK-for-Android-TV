@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private View customView;
 
-    // 1. Plyr CSS/JS සහ Fonts load වෙන CDN domains මෙතනට එකතු කර ඇත
+    // Plyr CSS/JS සහ Fonts load වෙන CDN domains
     private final List<String> allowedDomains = Arrays.asList(
         "helasub.com",
         "youtube.com",
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 // Full Screen කරපු ගමන් බලෙන් Landscape කිරීම
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 
-                // Immersive Mode එක ඔන් කිරීම (Back, Home, Recent සහ Sony Side Sense සැඟවීම)
+                // Immersive Mode එක ඔන් කිරීම
                 getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString().toLowerCase();
                 
-                // 2. Video streams, Plyr files, CSS stylesheets, සහ Web fonts සඳහා අවසර දීම
+                // Video streams, Plyr files, CSS stylesheets, සහ Web fonts සඳහා අවසර දීම
                 if (url.startsWith("blob:") || url.contains("blob") || 
                     url.contains(".m3u8") || url.contains(".mp4") || url.contains(".ts") || url.contains(".m4s") || 
                     url.contains(".vtt") || url.contains(".srt") ||
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                     return super.shouldInterceptRequest(view, request);
                 }
 
-                // 3. Allowed domains check කිරීම
+                // Allowed domains check කිරීම
                 for (String domain : allowedDomains) {
                     if (url.contains(domain)) {
                         return super.shouldInterceptRequest(view, request);
@@ -171,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString().toLowerCase();
-                if (url.contains("app.helasub.com") || url.contains("helasub.com")) {
+                if (url.contains("helasub.com")) {
                     return false; 
                 }
                 return true; 
@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                // 4. plyr.php පිටුවේ CSS animations සහ shadows නැති නොවී තබා ගැනීම
+                // plyr.php පිටුවේ CSS animations සහ shadows නැති නොවී තබා ගැනීම
                 if (url != null && !url.toLowerCase().contains("plyr.php")) {
                     view.evaluateJavascript(
                         "javascript:(function() { " +
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.loadUrl("https://app.helasub.com");
+        webView.loadUrl("https://helasub.com");
     }
 
     @Override
