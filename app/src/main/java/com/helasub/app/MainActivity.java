@@ -25,8 +25,20 @@ public class MainActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private View customView;
 
-    private final List<String> allowedVideoDomains = Arrays.asList(
-        "helasub.com", "youtube.com", "youtu.be", "tmdb.org", "image.tmdb.org"
+    // 1. Plyr CSS/JS සහ Fonts load වෙන CDN domains මෙතනට එකතු කර ඇත
+    private final List<String> allowedDomains = Arrays.asList(
+        "helasub.com",
+        "youtube.com",
+        "youtu.be",
+        "tmdb.org",
+        "image.tmdb.org",
+        "plyr.io",
+        "cdn.plyr.io",
+        "jsdelivr.net",
+        "cdnjs.cloudflare.com",
+        "unpkg.com",
+        "googleapis.com",
+        "gstatic.com"
     );
 
     @Override
@@ -37,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
         );
 
-        // 💡 [NEW FEATURE] ෆිල්ම් එක ප්ලේ වෙද්දී ස්ක්‍රීන් එක SLEEP/OFF වීම වැළැක්වීම
+        // ෆිල්ම් එක ප්ලේ වෙද්දී ස්ක්‍රීන් එක SLEEP/OFF වීම වැළැක්වීම
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Sony Side Sense සහ Notch අයිනේ තියෙන දේවල් full screen එකේදී හැංගීමට (Android 9 සහ ඉහළ)
@@ -86,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 return false; 
             }
 
-            // 📺 වීඩියෝව Full Screen බටන් එක එබූ විට
+            // වීඩියෝව Full Screen බටන් එක එබූ විට
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
                 if (customView != null) {
@@ -99,14 +111,14 @@ public class MainActivity extends AppCompatActivity {
                 // Full Screen කරපු ගමන් බලෙන් Landscape කිරීම
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 
-                // 💡 [NEW FEATURE] Immersive Mode එක ඔන් කිරීම (Back, Home, Recent සහ Sony Side Sense සැඟවීම)
+                // Immersive Mode එක ඔන් කිරීම (Back, Home, Recent සහ Sony Side Sense සැඟවීම)
                 getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // යට බටන් 3 හැංගීම
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN // උඩ ස්ටේටස් බාර් එක හැංගීම
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY // ස්ක්‍රීන් එක උඩින් ඇද්දත් බටන්ස් ස්ථිරවම හැංගී තිබීම
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 );
 
                 webView.setVisibility(View.GONE);
@@ -114,12 +126,11 @@ public class MainActivity extends AppCompatActivity {
                 customViewContainer.setVisibility(View.VISIBLE);
             }
 
-            // Full Screen එකෙන් ඉවත් වන විට (නැවත සාමාන්‍ය තත්වයට පත් කිරීම)
+            // Full Screen එකෙන් ඉවත් වන විට
             @Override
             public void onHideCustomView() {
                 if (customView == null) return;
 
-                // Immersive Mode එක අයින් කර සාමාන්‍ය බටන් ටික ආපහු පෙන්වීම
                 getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
                 
@@ -136,21 +147,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString().toLowerCase();
-                if (url.startsWith("blob:") || url.contains("blob") || url.contains(".m3u8") || url.contains(".mp4") || url.contains(".ts") || url.contains(".m4s") || url.contains("stream") || url.contains("player") || url.contains("p2p") || url.contains("live")) {
+                
+                // 2. Video streams, Plyr files, CSS stylesheets, සහ Web fonts සඳහා අවසර දීම
+                if (url.startsWith("blob:") || url.contains("blob") || 
+                    url.contains(".m3u8") || url.contains(".mp4") || url.contains(".ts") || url.contains(".m4s") || 
+                    url.contains(".vtt") || url.contains(".srt") ||
+                    url.contains(".css") || url.contains(".woff") || url.contains(".woff2") || url.contains(".ttf") || url.contains(".svg") ||
+                    url.contains("stream") || url.contains("player") || url.contains("plyr") || url.contains("p2p") || url.contains("live")) {
                     return super.shouldInterceptRequest(view, request);
                 }
-                for (String domain : allowedVideoDomains) {
+
+                // 3. Allowed domains check කිරීම
+                for (String domain : allowedDomains) {
                     if (url.contains(domain)) {
                         return super.shouldInterceptRequest(view, request);
                     }
                 }
+
+                // ඉතිරි සියලුම Ad scripts / Trackers block කිරීම
                 return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream("".getBytes()));
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString().toLowerCase();
-                if (url.contains("app.helasub.com")) {
+                if (url.contains("app.helasub.com") || url.contains("helasub.com")) {
                     return false; 
                 }
                 return true; 
@@ -158,14 +179,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                view.evaluateJavascript(
-                    "javascript:(function() { " +
-                    "var style = document.createElement('style'); " +
-                    "style.innerHTML = '* { animation: none !important; transition: none !important; text-shadow: none !important; box-shadow: none !important; } " +
-                    "img { will-change: auto !important; image-rendering: auto !important; } " +
-                    ".sl-slider-wrapper, .carousel, .g-recaptcha { will-change: auto !important; }'; " +
-                    "document.head.appendChild(style); " +
-                    "})()", null);
+                // 4. plyr.php පිටුවේ CSS animations සහ shadows නැති නොවී තබා ගැනීම
+                if (url != null && !url.toLowerCase().contains("plyr.php")) {
+                    view.evaluateJavascript(
+                        "javascript:(function() { " +
+                        "var style = document.createElement('style'); " +
+                        "style.innerHTML = '* { animation: none !important; transition: none !important; text-shadow: none !important; box-shadow: none !important; } " +
+                        "img { will-change: auto !important; image-rendering: auto !important; } " +
+                        ".sl-slider-wrapper, .carousel, .g-recaptcha { will-change: auto !important; }'; " +
+                        "document.head.appendChild(style); " +
+                        "})()", null);
+                }
                 super.onPageFinished(view, url);
             }
         });
